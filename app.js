@@ -37,12 +37,27 @@ $('demo').onclick=()=>{
   acceptSource(c,'範例：山間小屋（裝置內繪製）');
 };
 for(const id of ['cropZoom','cropX','cropY'])$(id).oninput=()=>{if(!source)return;$('cropZoomValue').textContent=Number($('cropZoom').value).toFixed(1)+'×';drawSource($('crop'));invalidate();};
-document.querySelectorAll('input[name=size]').forEach(el=>el.onchange=()=>invalidate());
+function syncGrid(value,normalize=false){
+  let n=Number(value);
+  if(normalize)n=Math.min(100,Math.max(10,Math.round(Number.isFinite(n)?n:35)));
+  const valid=Number.isInteger(n)&&n>=10&&n<=100;
+  invalidate(valid?'格數已變更，請重新產生拼豆圖。':'請輸入 10 到 100 的整數格數。');
+  $('convert').disabled=!valid||!source||!paletteData;
+  if(!valid){$('gridSize').setAttribute('aria-invalid','true');return;}
+  $('gridSize').removeAttribute('aria-invalid');$('gridSize').value=String(n);$('gridRange').value=String(n);
+  $('gridSummary').textContent=`${n} × ${n} 格 · 共 ${(n*n).toLocaleString('zh-TW')} 顆豆`;
+  document.querySelectorAll('input[name=size]').forEach(el=>el.checked=Number(el.value)===n);
+}
+$('gridRange').oninput=e=>syncGrid(e.target.value);
+$('gridSize').oninput=e=>syncGrid(e.target.value);
+$('gridSize').onchange=e=>syncGrid(e.target.value,true);
+document.querySelectorAll('input[name=size]').forEach(el=>el.onchange=()=>syncGrid(el.value));
 for(const id of ['palette','maxColors'])$(id).onchange=()=>invalidate();
 $('convert').onclick=()=>{
   if(!source||!paletteData)return;
   invalidate('正在配色，照片仍留在你的裝置…');$('convert').disabled=true;$('convert').textContent='正在產生…';
-  const id=generation,n=Number(document.querySelector('input[name=size]:checked').value);
+  const id=generation,n=Number($('gridSize').value);
+  if(!Number.isInteger(n)||n<10||n>100){status('請輸入 10 到 100 的整數格數。',true);$('convert').textContent='產生拼豆圖 →';return;}
   const palette=paletteData.colors.filter(c=>$('palette').value==='221'||paletteData.kit36.includes(c.code));
   const maxColors=$('maxColors').value==='all'?palette.length:Math.min(Number($('maxColors').value),palette.length);
   const sample=document.createElement('canvas');sample.width=sample.height=n;drawSource(sample);
