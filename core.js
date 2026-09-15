@@ -20,7 +20,7 @@ export function validatePalette(data) {
 }
 // A palette-constrained greedy facility selection minimizes total squared OKLab
 // error. Every cell is finally mapped only to the selected <= K real bead colors.
-// The full distance matrix is bounded at 2500 x 500 and stays inside a worker.
+// The full distance matrix is bounded at 10000 x 500 and stays inside a worker.
 export function quantize(pixels,palette,maxColors) {
   if(!pixels.length || !palette.length || !Number.isInteger(maxColors) || maxColors<1) throw Error('無效的轉換設定');
   const n=pixels.length,m=palette.length,k=Math.min(maxColors,m);
